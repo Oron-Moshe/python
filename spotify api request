@@ -1,0 +1,97 @@
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+
+# Authentication
+sp_oauth = SpotifyOAuth(
+    client_id="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    client_secret="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    redirect_uri="http://localhost:8080/callback",
+    scope="user-read-playback-state")
+
+sp = spotipy.Spotify(auth_manager=sp_oauth)
+
+# Variables
+me = sp.me() # My user info
+devices = sp.devices() # Active Devices
+currently_playing = sp.currently_playing() # Currently song playing
+
+# Welcoming
+def welcoming():
+    print(f"Hello {me['display_name']}, Welcome to Spotify Music API!")
+    input("to continue press 'Enter'...")
+    print("-" * 40)
+    return main_menu()
+
+
+# Main Menu dict
+menu_dict = {
+    "0": "Exit",
+    "1": "Currently song playing",
+    "2": "Recommended tracks based artist genre"
+}
+
+# Return to the main menu
+def return_main_menu():
+    choice = input("If you wish to return to the main menu enter '1', for exit please enter '0': ")
+    while True:
+        if choice == "1":
+            print("-" * 40)
+            return main_menu()
+        elif choice == "0":
+            print("Program is shutting down")
+            return exit()
+        else:
+            return print("Invalid choice, please select a valid option.")
+
+
+# What playing now
+def active_song():
+    if currently_playing == None:
+        print("-" * 40)
+        print("Nothing playing right now.")
+        print("-" * 40)
+        return_main_menu()
+    else:
+        print("-" * 40)
+        print("Active Song:")
+        print(f"Track name: {currently_playing['item']['name']}")
+        print(f'Artists name: {currently_playing["item"]["album"]["artists"][0]["name"]}')
+        print(f"Album name: {currently_playing["item"]["album"]["name"]}")
+        print(f"Playing on the device: {devices['devices'][0]['name']}")
+        print("-" * 40)
+        return_main_menu()
+
+# Recommendations based artists
+def artist_recommendations(artist_name):
+    search_by_artist = sp.search(q=artist_name, limit=1, type='artist')
+    artist_id = search_by_artist['artists']['items'][0]['id']
+    recommendations = sp.recommendations(seed_artists=[artist_id], limit=5)
+    print("-" * 40)
+    print("Here are some recommendations based on your artist choice:")
+    for track in recommendations['tracks']:
+        print(f"{track['name']} by {track['artists'][0]['name']}")
+    print("-" * 40)
+    return_main_menu()
+
+
+# The main meni of the function
+def  main_menu():
+    while True:
+        for keys, value in menu_dict.items():
+            print(f"[{keys}]:", value)
+        main_menu_choice = input("Please enter the number you want to do: ")
+        if main_menu_choice == "0":
+            print("Program is shutting down")
+            return exit()
+        elif main_menu_choice == "1":
+            active_song()
+        elif main_menu_choice == "2":
+            artist_name = input("Please enter artist name to get recommended tracks based the his genre: ")
+            artist_recommendations(artist_name)
+        else:
+            print("Invalid choice, please select a valid option.")
+
+
+welcoming()
+main()
